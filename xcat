@@ -1,0 +1,53 @@
+1) CREATE MASTER CENTOS 7 VM:- 4GB RAM, 2 PROCESSORS, 50GB HD, (TWO 
+ADAPTERS: NAT, HOST-ONLY)
+2) CREATE blank vm VM:- 4GB RAM, 2 PROCESSORS, 50GB HD, 
+( ADAPTER: HOST-ONLY)
+
+Xcat:
+
+$ vim /etc/sysconfig/selinux
+
+	SELINUX=disabled
+
+$ reboot
+$ systemctl stop firewalld
+$ systemctl disable firewalld
+$ systemctl status firewalld
+
+$ vim /etc/hosts
+	[host-only ip] master master.cdac.in
+	
+
+$ yum install yum-utils
+$ wget -P /etc/yum.repos.d https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo
+$ wget -P /etc/yum.repos.d https://xcat.org/files/xcat/repos/yum/xcat-dep/rh7/x86_64/xcat-dep.repo
+$ yum install xCAT -y
+$ . /etc/profile.d/xcat.sh
+$  ifconfig ens36 192.168.254.134 netmask 255.255.255.0 up    (host-only interface and ip)
+
+$ chdef -t site dhcpinerfaces="ens36"    (host-only interface)
+
+- copy centos7 in vm use mobax
+
+$ copycds /{iso_path}/CentOS-7-x86_64-DVD-2009.iso
+
+$ lsdef -t osimage
+
+make new vm => i will install later => mac address will display
+
+$ mkdef -t node cn01 groups=compute,all installnic=mac ip=192.168.149.132 mac=00:0C:29:D3:43:3D netboot=xnba postbootscripts=otherpkgs postscripts="syslog,remoteshell,syncfiles,confignetwork -s"
+                                                       (client vm get this ip)
+
+$ chtab key=system passwd.username=root passwd.password=dhpcsa
+
+$ chdef -t site domain=master.cdac.in
+
+$ makehosts
+$ makenetworks
+$ makedhcp -n
+$ makedns -n
+
+$  nodeset compute osimage=centos7.9-x86_64-install-compute
+
+go to client vm reboot clt+alt+insert
+
