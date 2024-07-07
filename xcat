@@ -3,7 +3,7 @@ ADAPTERS: NAT, HOST-ONLY)
 2) CREATE blank vm VM:- 4GB RAM, 2 PROCESSORS, 50GB HD, 
 ( ADAPTER: HOST-ONLY)
 
-Xcat:
+Xcat: Statefull
 
 $ vim /etc/sysconfig/selinux
 
