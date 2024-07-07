@@ -1,6 +1,7 @@
-HPC
-2vm centos
-set hostname master, client
+1) Create VM:- centos 7 , 4GB RAM, 2 PROCESSORS, 50GB HD, (TWO 
+ADAPTERS: NAT, HOST-ONLY)
+2) Create blank vm VM:- 4GB RAM, 2 PROCESSORS, 50GB HD, 
+( ADAPTER: HOST-ONLY)
 
 
 ---in master
