@@ -4,7 +4,7 @@ ADAPTERS: NAT, HOST-ONLY)
 ( ADAPTER: HOST-ONLY)
 
 on master:
-
+$ su
 $ vi /etc/selinux/config
 > disabled
 
