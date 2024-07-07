@@ -1,0 +1,154 @@
+HPC
+2vm centos
+set hostname master, client
+
+
+---in master
+
+$ yum install dhcp
+
+-right click
+	network adapter
+	make him host-only
+ 
+
+$ vim /etc/sysconfig/dhcpd 
+	DHCPDARGS=ens33
+
+note: cd /usr/share/doc/   (config file examples)
+
+$ cp /usr/share/doc/dhcp-4.2.5/dhcpd.conf.example  /etc/dhcp/dhcpd.conf 
+
+$ nano /etc/dhcp/dhcpd.conf 
+
+# dhcpd.conf
+#
+# Sample configuration file for ISC dhcpd
+#
+
+# option definitions common to all supported networks...
+option domain-name "example.org";
+option domain-name-servers ns1.example.org, ns2.example.org;
+
+default-lease-time 3600;
+max-lease-time 7200;
+
+# Use this to enble / disable dynamic dns updates globally.
+#ddns-update-style none;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+authoritative;
+
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+log-facility local7;
+
+subnet 192.168.254.0 netmask 255.255.255.0 {
+	option routers			192.168.254.1;
+	option subnet-mask		255.255.255.0;
+	#option domain-search		"example.com";
+	option domain-name-servers	192.168.254.1;
+	range 192.168.254.10    192.168.254.15;
+}
+
+
+$ systemctl restart dhcpd
+$ systemctl status dhcpd
+$ systemctl status firewalld
+$ systemctl start firewalld
+
+$ firewall-cmd --add-service=dhcp --permanent
+
+
+
+---on client 
+	right click
+	network adapter
+	make him host-only
+
+
+$ systemctl restart network
+
+------------------------------------------------------------------
+NFS
+
+---in master:
+
+$ mkdir -p /tmp/myshare
+$ yum install nfs-utils
+$ systemctl start nfs-server
+$ systemctl status nfs-server
+$ systemctl status rpcbind
+
+
+$ vim /etc/exports
+
+	/tmp/myshare 192.168.254.10(rw,sync,no_root_squash)    - ip of client
+
+
+
+$ firewall-cmd --add-service=nfs --zone=public --permanent
+$ firewall-cmd --add-service=rpc-bind --zone=public --permanent
+$ firewall-cmd --add-service=mountd --zone=public --permanent
+
+$ firewall-cmd --reload 
+
+
+
+---in client
+
+$ mkdir -p /tmp/myshare
+
+$ yum install nfs-utils
+
+
+----------------------------------------------------------------------
+
+$ yum install syslinux xinetd tftp-server
+$ mkdir -p /var/lib/tftpboot/pxelinux.cfg
+$ cp /usr/share/syslinux/pxelinux.0  /var/lib/tftpboot/
+$ vi /etc/xinetd.d/tftp 
+	disable                 = no
+
+$ systemctl start xinetd.service 
+$ systemctl status xinetd.service
+$ cp /usr/share/doc/dhcp-4.2.5/dhcpd.conf.example  /etc/dhcp/dhcpd.conf 
+$ vim /etc/dhcp/dhcpd.conf
+
+subnet 192.168.149.0 netmask 255.255.255.0 {
+range  192.168.149.10    192.168.149.15;
+option domain-name-servers 192.168.149.169;
+option domain-name "master.example.com";
+option routers 192.168.149.169;
+option broadcast-address 192.168.149.255;
+default-lease-time 600;
+max-lease-time 7200;
+
+#ip of pxe server
+next-server     192.168.149.169;
+filename         "pxelinux.0";
+}
+           
+ 
+put centos ios file in vm using mobex                                       
+
+$ systemctl restart dhcpd
+$ systemctl status dhcpd
+$ mkdir -p /var/pxe/centos7
+$ mkdir -p /var/lib/tftpboot/centos7
+$ mount -t iso9660 -o loop /home/hpcmaster2/CentOS-7-x86_64-DVD-2009.iso /var/pxe/centos7/
+
+$ vim /etc/sysconfig/network-scripts/ifcfg-ens33 
+
+BOOTPROTO=static
+IPADDR=192.168.149.169
+PREFIX=24
+GATEWAY=192.168.149.1
+DNS=8.8.8.8
+
+
+$ cp /var/pxe/centos7/images/pxeboot/vmlinuz  /var/lib/tftpboot/centos7/
+$ systemctl restart network
+$ systemctl status network
+
